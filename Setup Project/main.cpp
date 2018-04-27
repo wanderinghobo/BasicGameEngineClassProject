@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <iostream>
 #include <string>
 #include "Animation.h"
@@ -66,6 +67,16 @@ int main(int argc, char **argv)
 	else
 	{
 		cout << "Renderer FAILED!" << endl;
+		return -1;
+	}
+
+	//INIT sdl ttf
+	if (TTF_Init() != 0)
+	{
+		//if failed, complain about it
+		cout << "SDL TTF FAILED!" << endl;
+		system("pause");
+		SDL_Quit();
 		return -1;
 	}
 
@@ -144,6 +155,23 @@ int main(int argc, char **argv)
 
 	//add our hero to the list
 	entities.push_back(hero);
+
+	//LOAD UP OUR FONT
+	TTF_Font* font = TTF_OpenFont("assets/vermin_vibes_1989.ttf", 16); //params: font file, font size
+	SDL_Color textColor = { 123, 0, 34, 0 };
+	//create a sruface using this font to display some sort of message
+	SDL_Surface* textSurface = TTF_RenderText_Blended(font, "Hello Game!", textColor);
+	//convert surface to texture
+	SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+	//delete surface properly
+	SDL_FreeSurface(textSurface);
+
+	//text destination
+	SDL_Rect textDestination;
+	textDestination.x = 50;
+	textDestination.y = 50;
+	//get width and height from texture and set it for the destination
+	SDL_QueryTexture(textTexture, NULL, NULL, &textDestination.w, &textDestination.h);
 
 	bool loop = true;
 	while (loop){
@@ -226,6 +254,10 @@ int main(int argc, char **argv)
 			(*eIt)->draw();
 		}
 
+		//DRAW TEXT ONTOP OF Everything else
+			//params: renderer(drawing object), texture to render, srcRectangle(null means use full texture, using an sdl_rect will choose a clip of texture), destination sdl_rect(where to draw, if NULL, fill entire window) 
+		SDL_RenderCopy(renderer, textTexture, NULL, &textDestination);
+
 		//then
 		//get renderer to output to the window
 		SDL_RenderPresent(renderer);
@@ -241,6 +273,14 @@ int main(int argc, char **argv)
 
 	//clean up any game objects
 	delete hero;
+
+	//cleanup font
+	TTF_CloseFont(font);
+	//clean up textures
+	SDL_DestroyTexture(textTexture);
+	SDL_DestroyTexture(runSpriteSheet);
+	SDL_DestroyTexture(runSpriteSheetWithNoBG);
+	SDL_DestroyTexture(knightTexture);
 
 	//clean up renderer and window properly (aka clean up dynamic memory)
 	SDL_DestroyRenderer(renderer);
