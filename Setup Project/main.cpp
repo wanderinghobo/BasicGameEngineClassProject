@@ -11,6 +11,8 @@
 #include "KeyboardHandler.h"
 #include "MouseHandler.h"
 #include "GameControllerHandler.h"
+#include "Ball.h"
+#include "GlobalGameState.h"
 
 using namespace std;
 
@@ -69,6 +71,8 @@ int main(int argc, char **argv)
 		cout << "Renderer FAILED!" << endl;
 		return -1;
 	}
+	//get global game state to reference this renderer for global access
+	GlobalGameState::renderer = renderer;
 
 	//INIT sdl ttf
 	if (TTF_Init() != 0)
@@ -156,6 +160,23 @@ int main(int argc, char **argv)
 	//add our hero to the list
 	entities.push_back(hero);
 
+	//Make some balls
+	Ball *ball1 = new Ball();
+	Ball *ball2 = new Ball();
+
+	ball1->setRenderer(renderer);
+	ball1->pos.x = 100;
+	ball1->pos.y = 10;
+	
+	ball2->setRenderer(renderer);
+	ball2->pos.x = 400;
+	ball2->pos.y = 10;
+	ball2->moveInDirection(115, 400);
+
+
+	entities.push_back(ball1);
+	entities.push_back(ball2);
+
 	//LOAD UP OUR FONT
 	TTF_Font* font = TTF_OpenFont("assets/vermin_vibes_1989.ttf", 16); //params: font file, font size
 	SDL_Color textColor = { 123, 0, 34, 0 };
@@ -189,6 +210,11 @@ int main(int argc, char **argv)
 		SDL_SetRenderDrawColor(renderer, 255, 0, 168, 255);
 		//clear screen with current draw colour
 		SDL_RenderClear(renderer);
+
+
+		
+
+		
 		//TODO draw stuff to renderer here, like game images, colours, ui whatever
 		//set drawing colour to BABY BLUE
 		SDL_SetRenderDrawColor(renderer, 0, 228, 255, 255);
@@ -235,6 +261,15 @@ int main(int argc, char **argv)
 					//exit loop
 					loop = false;
 				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_1){
+					GlobalGameState::currentGameState = MENU;
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_2){
+					GlobalGameState::currentGameState = OPTIONS;
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_3){
+					GlobalGameState::currentGameState = GAMEPLAY;
+				}
 				
 			}
 			//if gamecontroller connected, use it
@@ -258,6 +293,22 @@ int main(int argc, char **argv)
 			//params: renderer(drawing object), texture to render, srcRectangle(null means use full texture, using an sdl_rect will choose a clip of texture), destination sdl_rect(where to draw, if NULL, fill entire window) 
 		SDL_RenderCopy(renderer, textTexture, NULL, &textDestination);
 
+
+		switch (GlobalGameState::currentGameState){
+		case MENU:
+			SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+			SDL_RenderClear(renderer);
+			break;
+		case OPTIONS:
+			SDL_SetRenderDrawColor(renderer, 0, 128, 255, 255);
+			SDL_RenderClear(renderer);
+			break;
+		case GAMEPLAY:
+			SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+			SDL_RenderClear(renderer);
+			break;
+		}
+
 		//then
 		//get renderer to output to the window
 		SDL_RenderPresent(renderer);
@@ -273,6 +324,8 @@ int main(int argc, char **argv)
 
 	//clean up any game objects
 	delete hero;
+	delete ball1;
+	delete ball2;
 
 	//cleanup font
 	TTF_CloseFont(font);
